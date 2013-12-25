@@ -1,4 +1,3 @@
-
 typedef struct
 {
 	int idBoard[10][10];	// Tableau du jeu de 10 cases par 10. dim1=ligne dim2=colonne. Chaque pion est renseigne par un id, les lacs par -1 et les cases vides par 0
