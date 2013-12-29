@@ -1,3 +1,5 @@
+#include "stratego.h"
+
 typedef struct
 {
 	int line; //ligne dans laquelle se trouve la piece
@@ -20,6 +22,7 @@ typedef struct
 
 		typedef struct
 {
+    EColor color;
 	int idBoard[10][10];	// Tableau du jeu de 10 cases par 10. dim1=ligne dim2=colonne. Chaque pion est renseigne par un id, les lacs par -1 et les cases vides par 0
 	playerBox pieceAlly[40];	// Tableau contenant des playerBox renseignant les infos sur les pieces alliés.
 	ennemyBox pieceEnnemy[40];	// Tableau contenant des playerBox renseignant les infos sur les pieces ennemies.
