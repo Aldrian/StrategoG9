@@ -3,10 +3,52 @@
 #include "stratego.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 static SIaState* IaState;
 
+void affichTab();
 
+void getPlacement(EPiece [4][10]);
 
+void StartGame(const EColor,EPiece [4][10]);
+
+//Mise à jour du idBoard et pieceEnnemy avec le dernier coup adverse
+void updateEnnemy(SMove ennemyMove){
+    int idMoved = IaState->idBoard[ennemyMove.start.line][ennemyMove.start.col];
+
+    if(idMoved < 40 || idMoved > 79)printf("L'élément n'est pas une pièce ennemie\n\n");
+    if(IaState->idBoard[ennemyMove.end.line][ennemyMove.end.col] != -1)printf("La case d'arrivée n'est pas disponible\n\n");
+
+    //MAJ de la ennemyBox
+    IaState->pieceEnnemy[idMoved].booleanHasMoved = 1;
+    printf("\nMouvement ennemi :\nid : %d\n[%d][%d] vers [%d][%d]\n",idMoved,ennemyMove.start.line,ennemyMove.start.col,ennemyMove.end.line,ennemyMove.end.col);
+
+    IaState->pieceEnnemy[idMoved].line = ennemyMove.end.line;
+    IaState->pieceEnnemy[idMoved].column = ennemyMove.end.col;
+    printf("Position connue actualisee : [%d][%d]\n",IaState->pieceEnnemy[idMoved].line,IaState->pieceEnnemy[idMoved].column);
+
+    //MAJ idBoard
+    IaState->idBoard[ennemyMove.start.line][ennemyMove.start.col] = -1;
+    IaState->idBoard[ennemyMove.end.line][ennemyMove.end.col] = idMoved;
+
+}
+
+//Mise a jour de l'idBoard et du pieceAlly avec le coup decide par l'ia
+void updateAlly(SMove allyMove, int id){
+    int idMoved = id;
+
+    //MAJ de la allyBox
+    printf("\nMouvement allie :\nid : %d\n[%d][%d] vers [%d][%d]\n",idMoved,allyMove.start.line,allyMove.start.col,allyMove.end.line,allyMove.end.col);
+
+    IaState->pieceAlly[idMoved].line = allyMove.end.line;
+    IaState->pieceAlly[idMoved].column = allyMove.end.col;
+    printf("Position connue actualisee : [%d][%d]\n",IaState->pieceAlly[idMoved].line,IaState->pieceAlly[idMoved].column);
+
+    //MAJ idBoard
+    IaState->idBoard[allyMove.start.line][allyMove.start.col] = -1;
+    IaState->idBoard[allyMove.end.line][allyMove.end.col] = idMoved;
+
+}
 
 int main()
 {
@@ -15,7 +57,17 @@ int main()
     StartGame(ECred,boardInit);
     affichTab();
 
+    SMove * move1;
+    move1 = malloc(sizeof(SMove));
+    move1->start.line = 6;
+    move1->start.col = 0;
+    move1->end.line = 5;
+    move1->end.col = 0;
 
+    updateEnnemy(*move1);
+    affichTab();
+
+    return 0;
 
 }/*
 void StartMatch();
@@ -39,8 +91,6 @@ void affichTab()
 }
 void StartGame(const EColor color,EPiece boardInit[4][10])
 {
-
-
 
 
     int i,j;
