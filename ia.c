@@ -20,7 +20,10 @@ void updateEnnemy(SMove ennemyMove){
     if(IaState->idBoard[ennemyMove.end.line][ennemyMove.end.col] != -1)printf("La case d'arrivée n'est pas disponible\n\n");
 
     //MAJ de la ennemyBox
-    IaState->pieceEnnemy[idMoved].booleanHasMoved = 1;
+    if(IaState->pieceEnnemy[idMoved].booleanHasMoved == 0){
+        IaState->pieceEnnemy[idMoved].booleanHasMoved = 1;
+       //Attributio d'une proba IaState->pieceEnnemy[idMoved].value =
+    }
     printf("\nMouvement ennemi :\nid : %d\n[%d][%d] vers [%d][%d]\n",idMoved,ennemyMove.start.line,ennemyMove.start.col,ennemyMove.end.line,ennemyMove.end.col);
 
     IaState->pieceEnnemy[idMoved].line = ennemyMove.end.line;
@@ -30,6 +33,8 @@ void updateEnnemy(SMove ennemyMove){
     //MAJ idBoard
     IaState->idBoard[ennemyMove.start.line][ennemyMove.start.col] = -1;
     IaState->idBoard[ennemyMove.end.line][ennemyMove.end.col] = idMoved;
+
+    IaState->pieceEnnemy[idMoved].lastMove = ennemyMove;
 
 }
 
@@ -50,6 +55,113 @@ void updateAlly(SMove allyMove, int id){
 
 }
 
+//Ally gagne contre Ennemy
+void allyWin(SPos posAlly, int idAlly, SPos posEnnemy, int idEnnemy){
+
+    ennemyBox ennemyEmpty;
+
+    IaState->pieceEnnemy[idEnnemy] = ennemyEmpty;
+    IaState->idBoard[posEnnemy.line][posEnnemy.col] = idAlly;
+    IaState->idBoard[posAlly.line][posAlly.col] = -1;
+    IaState->pieceAlly[idAlly].line = posEnnemy.line;
+    IaState->pieceAlly[idAlly].column = posEnnemy.col;
+}
+
+//Ennemy gagne contre Ally
+void ennemyWin(SPos posAlly, int idAlly, SPos posEnnemy, int idEnnemy){
+
+    playerBox allyEmpty;
+
+    IaState->pieceAlly[idAlly] = allyEmpty;
+    IaState->idBoard[posAlly.line][posAlly.col] = idEnnemy;
+    IaState->idBoard[posEnnemy.line][posEnnemy.col] = -1;
+    IaState->pieceEnnemy[idEnnemy].line = posAlly.line;
+    IaState->pieceEnnemy[idEnnemy].column = posAlly.col;
+}
+
+//Ally perd contre Ennemy
+void allyLoose(SPos posAlly, int idAlly){
+
+    playerBox playerEmpty;
+
+    IaState->pieceAlly[idAlly] = playerEmpty;
+    IaState->idBoard[posAlly.line][posAlly.col] = -1;
+}
+
+//Ennemy perd contre Ally
+void ennemyLoose(SPos posEnnemy, int idEnnemy){
+
+    ennemyBox ennemyEmpty;
+
+    IaState->pieceEnnemy[idEnnemy] = ennemyEmpty;
+    IaState->idBoard[posEnnemy.line][posEnnemy.col] = -1;
+}
+
+
+void neutralisation(SPos posAlly, int idAlly, SPos posEnnemy, int idEnnemy){
+
+    playerBox playerEmpty;
+    ennemyBox ennemyEmpty;
+
+    IaState->pieceEnnemy[idEnnemy] = ennemyEmpty;
+    IaState->pieceAlly[idAlly] = playerEmpty;
+    IaState->idBoard[posEnnemy.line][posEnnemy.col] = -1;
+    IaState->idBoard[posAlly.line][posAlly.col] = -1;
+
+}
+
+//Prise en compte d'une attackResult lorsque l'attaquant est un allié
+//Utilisation du booleen attackBoolean pour différencier le cas où l'ally attaque l'ennemy et inversement
+// attackBoolean == 1 => ally attaque ennemy
+void updateAttack(SPos posAlly, EPiece ally, SPos posEnnemy, EPiece ennemy,int attackBoolean){
+    int idAlly = IaState->idBoard[posAlly.line][posAlly.col];
+    int idEnnemy = IaState->idBoard[posEnnemy.line][posEnnemy.col];
+
+    //Ally attaque Ennemy
+    if(attackBoolean == 1){
+        //Gestion des cas particuliers
+        if(ennemy == EPbomb && ally != EPminer){
+            allyLoose(posAlly, idAlly);
+        }
+        else if(ennemy == EPbomb && ally == EPminer){
+            allyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ally == EPspy && ennemy == EPmarshal){
+            allyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ally == ennemy){
+            neutralisation(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ally < ennemy){
+            allyLoose(posAlly, idAlly);
+        }
+        else{
+            allyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+    }
+    //Ennemy attaque Ally
+    else{
+        if(ally == EPbomb && ennemy != EPminer){
+            ennemyLoose(posAlly, idAlly);
+        }
+        else if(ally == EPbomb && ennemy == EPminer){
+            ennemyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ennemy == EPspy && ally == EPmarshal){
+            ennemyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ally == ennemy){
+            neutralisation(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+        else if(ennemy < ally){
+            ennemyLoose(posAlly, idAlly);
+        }
+        else{
+            ennemyWin(posAlly, idAlly, posEnnemy, idEnnemy);
+        }
+    }
+}
+
 int main()
 {
     IaState=malloc(sizeof(SIaState));
@@ -61,10 +173,22 @@ int main()
     move1 = malloc(sizeof(SMove));
     move1->start.line = 6;
     move1->start.col = 0;
-    move1->end.line = 5;
+    move1->end.line = 4;
     move1->end.col = 0;
 
     updateEnnemy(*move1);
+    affichTab();
+
+    SPos * posAlly;
+    posAlly = malloc(sizeof(SPos));
+    posAlly->line = 3; posAlly->col = 0;
+    SPos * posEnnemy;
+    posEnnemy = malloc(sizeof(SPos));
+    posEnnemy->line = 4; posEnnemy->col = 0;
+    EPiece ennemy = EPspy;
+    EPiece ally = EPbomb;
+
+    updateAttack(*posAlly, ally, *posEnnemy, ennemy, 1);
     affichTab();
 
     return 0;
